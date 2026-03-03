@@ -1,0 +1,175 @@
+{% extends 'receipts/base.html' %}
+
+{% block title %}Receipts - Smart Receipt Processor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-list me-2 text-primary"></i>All Receipts
+            </h2>
+            <p class="text-muted mb-0">Total: ${{ total_amount|floatformat:2 }}</p>
+        </div>
+        <a href="{% url 'upload_receipt' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Upload Receipt
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for key, label in categories %}
+                        <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ filters.date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Merchant, receipt #..." value="{{ filters.search }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Receipts Table -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Merchant</th>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Receipt #</th>
+                        <th class="text-end">Amount</th>
+                        <th>Tax</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for receipt in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if receipt.image %}
+                                <img src="{{ receipt.image.url }}" alt="" 
+                                     class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ receipt.merchant_name|default:"Unknown" }}</strong>
+                                    {% if receipt.notes %}
+                                    <small class="text-muted d-block">{{ receipt.notes|truncatechars:30 }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ receipt.receipt_date|default:"-" }}</td>
+                        <td>
+                            <span class="category-badge category-{{ receipt.category }}">
+                                {{ receipt.get_category_display }}
+                            </span>
+                        </td>
+                        <td><small>{{ receipt.receipt_number|default:"-" }}</small></td>
+                        <td class="text-end">
+                            <strong class="text-primary">${{ receipt.total_amount|floatformat:2|default:"0.00" }}</strong>
+                        </td>
+                        <td>
+                            {% if receipt.is_tax_deductible %}
+                            <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                            {% else %}
+                            <span class="badge bg-secondary">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'receipt_detail' receipt.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No receipts found matching your criteria.</p>
+                            <a href="{% url 'upload_receipt' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Upload Your First Receipt
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+Django>=6.0.0
+pytesseract>=0.3.13
+Pillow>=11.0.0
+pandas>=2.0.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
+numpy>=2.0.0
+pdf2image>=1.17.0

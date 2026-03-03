@@ -1,0 +1,172 @@
+{% extends 'receipts/base.html' %}
+
+{% block title %}Welcome - Smart Receipt Processor{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Smart Receipt &<br>Invoice Processor
+                </h1>
+                <p class="lead mb-4">
+                    Upload your receipts and let our AI-powered OCR extract all the important data automatically. 
+                    Track expenses, generate tax summaries, and manage your finances with ease.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'signup' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Get Started
+                    </a>
+                    <a href="{% url 'admin:login' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-file-invoice" style="font-size: 15rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Powerful Features</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 text-center">
+                    <div class="feature-icon bg-primary text-white mx-auto">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h4>Smart OCR</h4>
+                    <p class="text-muted">
+                        Advanced optical character recognition automatically extracts merchant names, 
+                        dates, amounts, and line items from your receipts.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 text-center">
+                    <div class="feature-icon bg-success text-white mx-auto">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Expense Tracking</h4>
+                    <p class="text-muted">
+                        Track your spending by category, view monthly trends, and identify 
+                        where your money goes with detailed analytics.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 text-center">
+                    <div class="feature-icon bg-warning text-white mx-auto">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h4>Tax Summaries</h4>
+                    <p class="text-muted">
+                        Generate comprehensive tax reports with deductible expenses organized 
+                        by category for easy filing.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-3 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">1</span>
+                </div>
+                <h5>Upload Receipt</h5>
+                <p class="text-muted">Take a photo or upload an image of your receipt</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">2</span>
+                </div>
+                <h5>AI Processing</h5>
+                <p class="text-muted">Our OCR extracts all the important data automatically</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">3</span>
+                </div>
+                <h5>Review & Edit</h5>
+                <p class="text-muted">Verify the extracted data and make any corrections</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">4</span>
+                </div>
+                <h5>Track & Report</h5>
+                <p class="text-muted">View summaries and generate tax reports</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Expense Categories</h2>
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-utensils fa-2x text-warning mb-2"></i>
+                    <h6>Food & Dining</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-car fa-2x text-primary mb-2"></i>
+                    <h6>Transportation</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-briefcase fa-2x text-success mb-2"></i>
+                    <h6>Office Supplies</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-bolt fa-2x text-danger mb-2"></i>
+                    <h6>Utilities</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-plane fa-2x text-info mb-2"></i>
+                    <h6>Travel</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-heartbeat fa-2x text-danger mb-2"></i>
+                    <h6>Healthcare</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-film fa-2x text-purple mb-2"></i>
+                    <h6>Entertainment</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card p-3 text-center">
+                    <i class="fas fa-shopping-bag fa-2x text-secondary mb-2"></i>
+                    <h6>Shopping</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends 'receipts/base.html' %}
+
+{% block title %}Tax Summary - Smart Receipt Processor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>Tax Summary
+            </h2>
+            <p class="text-muted mb-0">Tax year {{ tax_year }} deductible expenses</p>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2">
+                <select name="year" class="form-select" onchange="this.form.submit()">
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if y == tax_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <button type="button" class="btn btn-success" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Print Report
+            </button>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Total Deductions</h6>
+                        <h3 class="fw-bold mb-0">${{ total_deductions|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Deductible Receipts</h6>
+                        <h3 class="fw-bold mb-0">{{ total_receipts }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Business Expenses</h6>
+                        <h3 class="fw-bold mb-0">${{ business_total|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Category Summary -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-tags me-2 text-primary"></i>Deductions by Category
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monthly Breakdown -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-calendar-alt me-2 text-primary"></i>Monthly Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Table -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list me-2 text-primary"></i>Tax-Deductible Receipts
+                    </h5>
+                    <span class="badge bg-success">{{ total_receipts }} receipts</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Merchant</th>
+                                    <th>Category</th>
+                                    <th>Receipt #</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for receipt in tax_receipts %}
+                                <tr>
+                                    <td>{{ receipt.receipt_date|date:"M d, Y"|default:"-" }}</td>
+                                    <td>
+                                        <strong>{{ receipt.merchant_name|default:"Unknown" }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="category-badge category-{{ receipt.category }}">
+                                            {{ receipt.get_category_display }}
+                                        </span>
+                                    </td>
+                                    <td><small>{{ receipt.receipt_number|default:"-" }}</small></td>
+                                    <td class="text-end">
+                                        <strong class="text-success">${{ receipt.total_amount|floatformat:2|default:"0.00" }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ receipt.notes|truncatechars:30|default:"-" }}</small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No tax-deductible receipts found for {{ tax_year }}.</p>
+                                        <p class="small text-muted">
+                                            Mark receipts as "tax deductible" in the receipt details to include them here.
+                                        </p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-group-divider">
+                                <tr class="table-primary">
+                                    <td colspan="4" class="text-end fw-bold">Total Deductions:</td>
+                                    <td class="text-end fw-bold fs-5">${{ total_deductions|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tax Tips -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>Tax Tips
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-check text-success me-2"></i>Common Deductions</h6>
+                            <ul class="small text-muted">
+                                <li>Business meals and entertainment</li>
+                                <li>Office supplies and equipment</li>
+                                <li>Travel expenses</li>
+                                <li>Professional development</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-exclamation-circle text-warning me-2"></i>Record Keeping</h6>
+                            <ul class="small text-muted">
+                                <li>Keep receipts for at least 7 years</li>
+                                <li>Document business purpose</li>
+                                <li>Note who attended meals</li>
+                                <li>Save digital copies</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-info-circle text-info me-2"></i>Disclaimer</h6>
+                            <p class="small text-muted mb-0">
+                                This summary is for informational purposes only. Consult with a tax professional 
+                                for advice specific to your situation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Category Chart
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+const categorySummary = {{ category_summary|safe }};
+
+new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: categorySummary.map(d => d.category.charAt(0).toUpperCase() + d.category.slice(1)),
+        datasets: [{
+            data: categorySummary.map(d => d.total),
+            backgroundColor: [
+                '#4f46e5', '#06b6d4', '#10b981', '#f59e0b', 
+                '#ef4444', '#8b5cf6', '#ec4899', '#6b7280'
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12,
+                    padding: 10
+                }
+            }
+        }
+    }
+});
+
+// Monthly Chart
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+const monthlySummary = {{ monthly_summary|safe }};
+
+new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+            label: 'Deductions ($)',
+            data: Array(12).fill(0).map((_, i) => {
+                const monthData = monthlySummary.find(d => d.receipt_date__month === i + 1);
+                return monthData ? monthData.total : 0;
+            }),
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toFixed(0);
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

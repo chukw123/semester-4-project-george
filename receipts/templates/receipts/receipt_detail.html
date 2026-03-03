@@ -1,0 +1,237 @@
+{% extends 'receipts/base.html' %}
+
+{% block title %}{{ receipt.merchant_name|default:"Receipt" }} - Smart Receipt Processor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-receipt me-2 text-primary"></i>Receipt Details
+            </h2>
+            <p class="text-muted mb-0">{{ receipt.merchant_name|default:"Unknown Merchant" }}</p>
+        </div>
+        <div>
+            <a href="{% url 'receipt_list' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Back
+            </a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="fas fa-trash me-2"></i>Delete
+            </button>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Receipt Image -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-image me-2 text-primary"></i>Receipt Image
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if receipt.image %}
+                    <img src="{{ receipt.image.url }}" alt="Receipt" class="receipt-image">
+                    {% else %}
+                    <div class="py-5">
+                        <i class="fas fa-image fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">No image available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- OCR Raw Text -->
+            {% if receipt.raw_ocr_text %}
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-code me-2 text-primary"></i>Raw OCR Text
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <pre class="small text-muted mb-0" style="max-height: 200px; overflow-y: auto;">{{ receipt.raw_ocr_text }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Receipt Details Form -->
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-edit me-2 text-primary"></i>Edit Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Merchant Name</label>
+                                <input type="text" name="merchant_name" class="form-control" 
+                                       value="{{ receipt.merchant_name|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Receipt Number</label>
+                                <input type="text" name="receipt_number" class="form-control" 
+                                       value="{{ receipt.receipt_number|default:'' }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date</label>
+                                <input type="date" name="receipt_date" class="form-control" 
+                                       value="{{ receipt.receipt_date|date:'Y-m-d'|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Category</label>
+                                <select name="category" class="form-select">
+                                    {% for key, label in categories %}
+                                    <option value="{{ key }}" {% if receipt.category == key %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Subtotal</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" 
+                                           value="{{ receipt.subtotal|floatformat:2|default:'' }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tax</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" 
+                                           value="{{ receipt.tax_amount|floatformat:2|default:'' }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Total</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" name="total_amount" class="form-control fw-bold" 
+                                           value="{{ receipt.total_amount|floatformat:2|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_tax_deductible" class="form-check-input" 
+                                           id="taxDeductible" {% if receipt.is_tax_deductible %}checked{% endif %}>
+                                    <label class="form-check-label" for="taxDeductible">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        This expense is tax deductible
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="3">{{ receipt.notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Line Items -->
+            {% if items %}
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list me-2 text-primary"></i>Line Items
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.description }}</td>
+                                    <td class="text-center">{{ item.quantity }}</td>
+                                    <td class="text-end">${{ item.unit_price|floatformat:2|default:"-" }}</td>
+                                    <td class="text-end fw-bold">${{ item.total_price|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Metadata -->
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>Metadata
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row small text-muted">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Receipt ID:</strong> {{ receipt.id }}</p>
+                            <p class="mb-1"><strong>Processing Status:</strong> 
+                                <span class="badge bg-{% if receipt.processing_status == 'completed' %}success{% elif receipt.processing_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                    {{ receipt.get_processing_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Created:</strong> {{ receipt.created_at|date:"M d, Y H:i" }}</p>
+                            <p class="mb-1"><strong>Updated:</strong> {{ receipt.updated_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this receipt from <strong>{{ receipt.merchant_name|default:"Unknown Merchant" }}</strong>?</p>
+                <p class="text-muted mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'delete_receipt' receipt.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Receipt
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
